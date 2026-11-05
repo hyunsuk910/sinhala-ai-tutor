@@ -460,6 +460,11 @@ def load_storage():
         "current_lesson_id": None,
         "vocab_notes": []
     }
+    
+    # 1. Streamlit Secrets(금고)에 등록된 키가 있다면 자동으로 우선 적용
+    if hasattr(st, "secrets") and "GEMINI_API_KEY" in st.secrets:
+        default_structure["api_key"] = st.secrets["GEMINI_API_KEY"]
+
     if os.path.exists(DATA_FILE):
         try:
             with open(DATA_FILE, "r", encoding="utf-8") as f:
@@ -467,10 +472,14 @@ def load_storage():
                 for key, val in default_structure.items():
                     if key not in data:
                         data[key] = val
+                # 파일에 키가 없더라도 Secrets 키가 있다면 채워넣기
+                if not data.get("api_key") and default_structure["api_key"]:
+                    data["api_key"] = default_structure["api_key"]
                 return data
         except Exception:
             pass
     return default_structure
+
 
 def save_storage(data):
     with open(DATA_FILE, "w", encoding="utf-8") as f:
