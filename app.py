@@ -294,10 +294,12 @@ st.markdown("""
 def enlarge_sinhala_only(text: str) -> str:
     if not text:
         return ""
+    # 이미 태그가 섞여있다면 먼저 태그를 깨끗이 제거한 후 재적용
+    clean_text = re.sub(r'<span class="si-char">([^<]+)</span>', r'\1', text)
     return re.sub(
         r'([\u0D80-\u0DFF]+(?:\s+[\u0D80-\u0DFF]+)*)',
         r'<span class="si-char">\1</span>',
-        text
+        clean_text
     )
 
 def inject_section_anchors(content: str) -> str:
@@ -437,6 +439,11 @@ def extract_vocab_table(content: str):
         elif in_table and s.startswith("##"):
             break
     return vocab_list
+def strip_html_tags(text: str) -> str:
+    """문자열 안에 잘못 포함된 HTML 태그를 제거하여 순수 텍스트만 추출"""
+    if not text:
+        return ""
+    return re.sub(r'<[^>]+>', '', text).strip()
 
 # ==========================================
 # 3. 로컬 영구 저장소
