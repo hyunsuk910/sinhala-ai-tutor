@@ -12,6 +12,15 @@ from google import genai
 from google.genai import types
 from gtts import gTTS
 from prompts import get_lesson_prompt, get_tutor_prompt
+
+# 파일 경로 설정
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_FILE = os.path.join(BASE_DIR, "data.json")
+AUDIO_DIR = os.path.join(BASE_DIR, "audio_cache")
+os.makedirs(AUDIO_DIR, exist_ok=True)
+
+# Gemini 모델 ID
+MODEL_ID = os.getenv("GEMINI_MODEL_ID", "gemini-2.0-flash")
 st.markdown("""
 <style>
 
