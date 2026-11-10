@@ -553,14 +553,23 @@ def add_to_vocab(storage, item_dict):
     save_storage(storage)
     return "added"
 
+# 1. 스토리지 로드 및 세션 상태 초기화
 if "storage" not in st.session_state:
     st.session_state.storage = load_storage()
-else:
-    # 새로고침 시 current_lesson_id가 누락되어 화면이 빈 것처럼 보이는 현상 방지
-    if st.session_state.storage.get("lessons") and not st.session_state.storage.get("current_lesson_id"):
-        lessons = st.session_state.storage["lessons"]
-        latest_id = sorted(lessons.keys(), key=lambda k: lessons[k].get("created_at", ""), reverse=True)[0]
-        st.session_state.storage["current_lesson_id"] = latest_id
+
+# 2. 전역 변수 'storage' 선언 (필수)
+storage = st.session_state.storage
+
+# 3. current_lesson_id 자동 복구 보정
+if storage.get("lessons") and not storage.get("current_lesson_id"):
+    lessons = storage["lessons"]
+    latest_id = sorted(
+        lessons.keys(),
+        key=lambda k: lessons[k].get("created_at", ""),
+        reverse=True
+    )[0]
+    storage["current_lesson_id"] = latest_id
+    st.session_state.storage["current_lesson_id"] = latest_id
 
 if "autoplay_file" not in st.session_state:
     st.session_state.autoplay_file = None
