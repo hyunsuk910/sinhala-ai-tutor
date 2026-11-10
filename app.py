@@ -13,50 +13,47 @@ from google.genai import types
 from gtts import gTTS
 from prompts import get_lesson_prompt, get_tutor_prompt
 
-# ==========================================
-# 1. 전역 설정 및 모바일/태블릿 반응형 CSS
-# ==========================================
-MODEL_ID = "gemini-3.8-flash"
-DATA_FILE = "local_storage.json"
-AUDIO_DIR = "audio_cache"
-
-os.makedirs(AUDIO_DIR, exist_ok=True)
-
-st.set_page_config(
-    page_title="싱할라어 AI 튜터",
-    page_icon="🇱🇰",
-    layout="wide",
-    initial_sidebar_state="collapsed"  # 모바일에서 메인 컨텐츠를 먼저 보여주도록 기본 접힘 설정
-)
-
-st.markdown("""
-<style>
-    /* 기본 모바일 여백 및 레이아웃 최적화 */
-    .block-container {
-        padding-top: 1.8rem !important;
-        padding-bottom: 6rem !important;
-        padding-left: 1rem !important;
-        padding-right: 1rem !important;
-        max-width: 100% !important;
+/* ========================================================
+       1. 싱할라어 유니코드 전용 자동 폰트 크기 확대 및 스타일링
+       ======================================================== */
+    @font-face {
+        font-family: 'SinhalaLarge';
+        /* 시스템 내 싱할라어 폰트 매핑 */
+        src: local('Noto Sans Sinhala'), local('Iskoola Pota'), local('Segoe UI Historic');
+        /* 싱할라 문자 유니코드 블록 (U+0D80 ~ U+0DFF) */
+        unicode-range: U+0D80-0DFF;
     }
 
-    /* 1) 싱할라 문자 반응형 크기 조절 (화면폭에 맞춰 자동 스케일링) */
-    code {
-        font-size: 0.95rem !important;
+    /* 본문 텍스트 전체에 싱할라 폰트 우선 적용 */
+    .stMarkdown, .stMarkdown p, .stMarkdown li {
+        font-family: 'SinhalaLarge', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+        font-size: 1.15rem !important;
+        line-height: 2.0 !important;
+        color: #f1f5f9 !important;
     }
-    .si-char {
-        font-size: clamp(1.8rem, 4.5vw, 2.3rem) !important;
+
+    /* 마크다운 본문 내 굵은 글씨(**) 안의 싱할라어 시인성 강화 */
+    .stMarkdown strong, .stMarkdown b {
+        font-size: 1.25rem !important;
         font-weight: 700 !important;
-        color: #60a5fa !important;
-        line-height: 1.65 !important;
-        padding: 0 4px;
-        font-family: "Noto Sans Sinhala", "Iskoola Pota", sans-serif;
+        color: #93c5fd !important; /* 가독성을 위한 부드러운 스카이블루 */
     }
-    .si-char-xl {
-        font-size: clamp(2.3rem, 6vw, 3.1rem) !important;
+
+    /* 표(Table) 내부 싱할라어 컬럼 확대 */
+    .stMarkdown table td {
+        font-size: 1.2rem !important;
+        line-height: 1.8 !important;
+    }
+
+    /* 개별 싱할라 카드/블록 전용 클래스 (기존 유지) */
+    .si-char {
+        font-size: clamp(2.2rem, 5.5vw, 2.9rem) !important;
         font-weight: 800 !important;
         color: #60a5fa !important;
-        line-height: 1.5 !important;
+        line-height: 1.6 !important;
+        display: inline-block;
+        padding: 2px 4px;
+        font-family: "Noto Sans Sinhala", "Iskoola Pota", sans-serif !important;
     }
 
     /* 2) 텍스트 스타일 */
