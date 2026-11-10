@@ -485,7 +485,7 @@ def load_storage():
         "vocab_notes": []
     }
     
-    # 1. Streamlit Secrets(금고)에 등록된 키가 있다면 자동으로 우선 적용
+    # 1. Streamlit Secrets 키 자동 반영
     if hasattr(st, "secrets") and "GEMINI_API_KEY" in st.secrets:
         default_structure["api_key"] = st.secrets["GEMINI_API_KEY"]
 
@@ -496,18 +496,32 @@ def load_storage():
                 for key, val in default_structure.items():
                     if key not in data:
                         data[key] = val
-                # 파일에 키가 없더라도 Secrets 키가 있다면 채워넣기
-                if not data.get("api_key") and default_structure["api_key"]:
-                    data["api_key"] = default_structure["api_key"]
+                
+                # 저장된 학습 내역이 있는데 선택된 ID가 없거나 유효하지 않으면 가장 최근 학습으로 자동 복구
+                if data["lessons"]:
+                    if not data.get("current_lesson_id") or data["current_lesson_id"] not in data["lessons"]:
+                        latest_id = sorted(
+                            data["lessons"].keys(),
+                            key=lambda k: data["lessons"][k].get("created_at", ""),
+                            reverse=True
+                        )[0]
+                        data["current_lesson_id"] = latest_id
                 return data
-        except Exception:
-            pass
+        except Exception as e:
+            st.error(f"데이터 로드 오류: {e}")
+            
     return default_structure
 
 
 def save_storage(data):
-    with open(DATA_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
+    """파일 쓰기 즉시 OS 디스크에 동기화(flush)되도록 보장"""
+    try:
+        with open(DATA_FILE, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+            f.flush()
+            os.fsync(f.fileno())
+    except Exception as e:
+        st.error(f"데이터 저장 실패: {e}")
 
 def add_to_vocab(storage, item_dict):
     for existing in storage["vocab_notes"]:
@@ -541,8 +555,12 @@ def add_to_vocab(storage, item_dict):
 
 if "storage" not in st.session_state:
     st.session_state.storage = load_storage()
-
-storage = st.session_state.storage
+else:
+    # 새로고침 시 current_lesson_id가 누락되어 화면이 빈 것처럼 보이는 현상 방지
+    if st.session_state.storage.get("lessons") and not st.session_state.storage.get("current_lesson_id"):
+        lessons = st.session_state.storage["lessons"]
+        latest_id = sorted(lessons.keys(), key=lambda k: lessons[k].get("created_at", ""), reverse=True)[0]
+        st.session_state.storage["current_lesson_id"] = latest_id
 
 if "autoplay_file" not in st.session_state:
     st.session_state.autoplay_file = None
