@@ -292,15 +292,21 @@ st.markdown("""
 # 2. 헬퍼 함수
 # ==========================================
 def enlarge_sinhala_only(text: str) -> str:
+    """
+    마크다운 리스트 및 기호와 충돌하는 <span class="si-char"> 대신,
+    마크다운 파서가 깨지지 않도록 안전하게 처리하거나 기존 태그 찌꺼기를 제거합니다.
+    """
     if not text:
         return ""
-    # 이미 태그가 섞여있다면 먼저 태그를 깨끗이 제거한 후 재적용
-    clean_text = re.sub(r'<span class="si-char">([^<]+)</span>', r'\1', text)
-    return re.sub(
-        r'([\u0D80-\u0DFF]+(?:\s+[\u0D80-\u0DFF]+)*)',
-        r'<span class="si-char">\1</span>',
-        clean_text
-    )
+    
+    # 1. 혹시 이미 본문에 섞여 들어간 <span ...> 태그 찌꺼기가 있다면 깨끗하게 제거
+    cleaned = re.sub(r'<span class="si-char">([^<]*)</span>', r'\1', text)
+    cleaned = re.sub(r'<span[^>]*>', '', cleaned)
+    cleaned = re.sub(r'</span>', '', cleaned)
+    
+    # 2. 본문 마크다운(가이드 전체) 렌더링 시에는 태그를 끼워넣지 않고 그대로 반환하여
+    #    리스트(-), 굵은 글씨(**), 인용문이 100% 정상 출력되도록 보장합니다.
+    return cleaned
 
 def inject_section_anchors(content: str) -> str:
     lines = content.splitlines()
