@@ -12,6 +12,8 @@ from google import genai
 from google.genai import types
 from gtts import gTTS
 from prompts import get_lesson_prompt, get_tutor_prompt
+st.markdown("""
+<style>
 
 /* ========================================================
        1. 싱할라어 유니코드 전용 자동 폰트 크기 확대 및 스타일링
@@ -889,7 +891,7 @@ elif app_mode == "🎙️ 실시간 AI 튜터 (음성 대화방)":
                         prompt = get_tutor_prompt(
                             lesson_context=lesson_ctx,
                             chat_history=recent_hist,
-                            user_input="첨부된 음성 녹음을 듣고 발음 정확도와 어순 교정, 모범 싱할라어 문장을 작성해 주세요. 첫 줄에 반드시 [주제: 10자 이내 요약 제목]을 적어주세요.",
+                            user_input="첨부된 음성 녹음을 듣고 발음 정확도와 어순 교정, 모범 싱할라어 문장을 작성해 주세요. 첫 줄에 반드시 [주제: 주제명] 형식으로 주제를 표시해 주세요.",
                             is_audio=True
                         )
                         resp = client.models.generate_content(
