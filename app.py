@@ -763,9 +763,8 @@ if app_mode == "📑 맞춤 학습 센터":
         """, unsafe_allow_html=True)
 
         anchored_md = inject_section_anchors(current_lesson["content"])
-        processed_content = enlarge_sinhala_only(lesson_content)
-        styled_content = enlarge_sinhala_only(anchored_md)
-        st.markdown(processed_content, unsafe_allow_html=True)
+        # styled_content 변수에 넣을 때 enlarge_sinhala_only()로 감싸주기
+        styled_content = enlarge_sinhala_only(current_lesson["content"])
         st.markdown(styled_content, unsafe_allow_html=True)
         st.divider()
 
