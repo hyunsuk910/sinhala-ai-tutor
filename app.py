@@ -35,21 +35,31 @@ st.markdown("""
         unicode-range: U+0D80-0DFF;
     }
 
-    /* 본문 텍스트 전체에 싱할라 폰트 우선 적용 */
+   /* 본문 기본 텍스트 (한글/영어는 일반적인 가독성 좋은 크기로 고정) */
     .stMarkdown, .stMarkdown p, .stMarkdown li {
-        font-family: 'SinhalaLarge', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
-        font-size: 1.15rem !important;
-        line-height: 2.0 !important;
-        color: #f1f5f9 !important;
+        font-size: 1.0rem !important;
+        line-height: 1.8 !important;
+        color: #e2e8f0 !important;
     }
 
-    /* 마크다운 본문 내 굵은 글씨(**) 안의 싱할라어 시인성 강화 */
+    /* 제목 및 굵은 글씨 크기 정상화 (한글이 무식하게 커지는 현상 방지) */
     .stMarkdown strong, .stMarkdown b {
-        font-size: 1.25rem !important;
+        font-size: 1.05rem !important;
         font-weight: 700 !important;
-        color: #93c5fd !important; /* 가독성을 위한 부드러운 스카이블루 */
+        color: #93c5fd !important;
     }
 
+    /* 💡 본문 속 싱할라 문자 전용 인라인 확대 스타일 */
+    .si-inline {
+        font-family: "Noto Sans Sinhala", "Iskoola Pota", sans-serif !important;
+        font-size: 1.45rem !important;      /* 싱할라 문자만 시원하게 1.45배 확대 */
+        font-weight: 600 !important;
+        color: #60a5fa !important;          /* 눈에 잘 띄는 밝은 파란색 포인트 */
+        line-height: 1.2 !important;
+        vertical-align: -2px;               /* 한글 줄바꿈 높이와 시각적 밸런스 조정 */
+        display: inline-block;
+        margin: 0 2px;
+    }
     /* 표(Table) 내부 싱할라어 컬럼 확대 */
     .stMarkdown table td {
         font-size: 1.2rem !important;
@@ -312,20 +322,26 @@ st.markdown("""
 # ==========================================
 def enlarge_sinhala_only(text: str) -> str:
     """
-    마크다운 리스트 및 기호와 충돌하는 <span class="si-char"> 대신,
-    마크다운 파서가 깨지지 않도록 안전하게 처리하거나 기존 태그 찌꺼기를 제거합니다.
+    한글/영어/마크다운 기호는 건드리지 않고,
+    싱할라어 문자 덩어리만 .si-inline 태그로 감싸 크기를 대폭 확대합니다.
     """
     if not text:
         return ""
     
-    # 1. 혹시 이미 본문에 섞여 들어간 <span ...> 태그 찌꺼기가 있다면 깨끗하게 제거
-    cleaned = re.sub(r'<span class="si-char">([^<]*)</span>', r'\1', text)
-    cleaned = re.sub(r'<span[^>]*>', '', cleaned)
-    cleaned = re.sub(r'</span>', '', cleaned)
+    # 1. 기존 잔여 태그 청소
+    text = re.sub(r'<span[^>]*>(.*?)</span>', r'\1', text)
     
-    # 2. 본문 마크다운(가이드 전체) 렌더링 시에는 태그를 끼워넣지 않고 그대로 반환하여
-    #    리스트(-), 굵은 글씨(**), 인용문이 100% 정상 출력되도록 보장합니다.
-    return cleaned
+    # 2. 순수 싱할라어 유니코드 블록(U+0D80 ~ U+0DFF) 덩어리만 골라서 치환
+    #    (마크다운 하이픈, 괄호, 숫자는 제외하고 순수 싱할라 글자만 확대)
+    pattern = r'([\u0D80-\u0DFF]+(?:[\u0D80-\u0DFF\s]*[\u0D80-\u0DFF])?)'
+    
+    def replacer(match):
+        sinhala_word = match.group(1).strip()
+        if sinhala_word:
+            return f'<span class="si-inline">{sinhala_word}</span>'
+        return match.group(1)
+
+    return re.sub(pattern, replacer, text)
 
 def inject_section_anchors(content: str) -> str:
     lines = content.splitlines()
@@ -747,7 +763,9 @@ if app_mode == "📑 맞춤 학습 센터":
         """, unsafe_allow_html=True)
 
         anchored_md = inject_section_anchors(current_lesson["content"])
+        processed_content = enlarge_sinhala_only(lesson_content)
         styled_content = enlarge_sinhala_only(anchored_md)
+        st.markdown(processed_content, unsafe_allow_html=True)
         st.markdown(styled_content, unsafe_allow_html=True)
         st.divider()
 
