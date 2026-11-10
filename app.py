@@ -20,7 +20,7 @@ AUDIO_DIR = os.path.join(BASE_DIR, "audio_cache")
 os.makedirs(AUDIO_DIR, exist_ok=True)
 
 # Gemini 모델 ID
-MODEL_ID = os.getenv("GEMINI_MODEL_ID", "gemini-2.0-flash")
+MODEL_ID = os.getenv("GEMINI_MODEL_ID", "gemini-3.5-flash")
 st.markdown("""
 <style>
 
