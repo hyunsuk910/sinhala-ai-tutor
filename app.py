@@ -322,27 +322,40 @@ st.markdown("""
 # ==========================================
 def enlarge_sinhala_only(text: str) -> str:
     """
-    한글/영어/마크다운 기호는 건드리지 않고,
-    싱할라어 문자 덩어리만 .si-inline 태그로 감싸 크기를 대폭 확대합니다.
+    1. 기존 잔여 태그 제거
+    2. 마크다운 인라인 코드(`...`) 내부는 태그 주입에서 제외
+    3. 일반 텍스트에 있는 싱할라어 문자만 .si-inline으로 확대
     """
     if not text:
         return ""
-    
-    # 1. 기존 잔여 태그 청소
+
+    # 1. 혹시 남아있는 기존 span 태그 찌꺼기 완벽 제거
     text = re.sub(r'<span[^>]*>(.*?)</span>', r'\1', text)
-    
-    # 2. 순수 싱할라어 유니코드 블록(U+0D80 ~ U+0DFF) 덩어리만 골라서 치환
-    #    (마크다운 하이픈, 괄호, 숫자는 제외하고 순수 싱할라 글자만 확대)
-    pattern = r'([\u0D80-\u0DFF]+(?:[\u0D80-\u0DFF\s]*[\u0D80-\u0DFF])?)'
-    
-    def replacer(match):
-        sinhala_word = match.group(1).strip()
-        if sinhala_word:
-            return f'<span class="si-inline">{sinhala_word}</span>'
+
+    # 2. 백틱(`...`)으로 감싸진 인라인 코드 블록은 임시 토큰으로 분리 보존
+    code_blocks = []
+    def save_code_block(match):
+        code_blocks.append(match.group(0))
+        return f"__CODE_BLOCK_{len(code_blocks)-1}__"
+
+    # `...` 패턴을 임시 치환
+    text_masked = re.sub(r'`[^`]+`', save_code_block, text)
+
+    # 3. 일반 본문 영역의 싱할라어 유니코드 블록(U+0D80~U+0DFF)만 확대 태그 적용
+    sinhala_pattern = r'([\u0D80-\u0DFF]+(?:[\u0D80-\u0DFF\s]*[\u0D80-\u0DFF])?)'
+    def apply_span(match):
+        word = match.group(1).strip()
+        if word:
+            return f'<span class="si-inline">{word}</span>'
         return match.group(1)
 
-    return re.sub(pattern, replacer, text)
+    processed_text = re.sub(sinhala_pattern, apply_span, text_masked)
 
+    # 4. 임시로 치환해 두었던 코드 블록들을 원본 그대로 복원
+    for idx, original_block in enumerate(code_blocks):
+        processed_text = processed_text.replace(f"__CODE_BLOCK_{idx}__", original_block)
+
+    return processed_text
 def inject_section_anchors(content: str) -> str:
     lines = content.splitlines()
     out = []
