@@ -277,6 +277,17 @@ st.markdown("""
         font-size: 0.85rem !important;
         font-weight: 500 !important;
     }
+    /* 마크다운 본문 내 텍스트 줄간격 및 가독성 확보 */
+    .stMarkdown p, .stMarkdown li {
+        font-size: 1.05rem !important;
+        line-height: 1.8 !important;
+        color: #e2e8f0 !important;
+    }
+
+    /* 본문 안에 싱할라어 유니코드가 포함된 문장도 시원하게 보이도록 행간과 폰트 지정 */
+    .stMarkdown {
+        font-family: -apple-system, BlinkMacSystemFont, "Noto Sans Sinhala", "Iskoola Pota", sans-serif !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
