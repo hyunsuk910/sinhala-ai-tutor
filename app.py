@@ -751,6 +751,30 @@ with st.sidebar:
                 storage["current_lesson_id"] = None
                 save_storage(storage)
                 st.rerun()
+# 사이드바 하단 데이터 백업/복원 영역
+with st.sidebar.expander("💾 데이터 영구 백업 / 복원", expanded=False):
+    # 1. 백업 파일 다운로드 (내 기기에 JSON 저장)
+    current_data_json = json.dumps(storage, ensure_ascii=False, indent=2)
+    st.download_button(
+        label="📥 내 학습 데이터 백업 받기",
+        data=current_data_json,
+        file_name="sinhala_backup.json",
+        mime="application/json",
+        use_container_width=True
+    )
+    
+    # 2. 백업 파일 업로드하여 즉시 복원
+    uploaded_file = st.file_uploader("📤 백업 파일 올려서 복원", type=["json"])
+    if uploaded_file is not None:
+        try:
+            restored_data = json.load(uploaded_file)
+            st.session_state.storage = restored_data
+            save_storage(restored_data)
+            st.success("데이터가 성공적으로 복원되었습니다!")
+            st.rerun()
+        except Exception as e:
+            st.error(f"복원 실패: {e}")
+
 # ==========================================
 # 5. 메인 화면 [1]: 📑 맞춤 학습 센터 (모바일 가로 스와이프 점프 칩)
 # ==========================================
